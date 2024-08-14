@@ -1,0 +1,64 @@
+name: Build Godot Project
+
+on:
+    push: {}
+    pull_request: {}
+
+env:
+    GODOT_VERSION: 4.2.2
+    EXPORT_NAME: Hypernex.Godot
+    PROJECT_PATH: Hypernex.Godot
+
+jobs:
+    export-windows:
+        runs-on: ubuntu-latest
+        container:
+            image: barichello/godot-ci:mono-4.2.2
+        env:
+            PLATFORM_NAME: windows-x64
+        steps:
+          - uses: actions/setup-dotnet@v4
+            with:
+                dotnet-version: '8'
+          - uses: actions/checkout@v4
+          - name: Setup
+            run: |
+                mkdir -v -p ~/.local/share/godot/export_templates/
+                mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono
+          - name: Build
+            run: |
+                mkdir -v -p build/${{ env.PLATFORM_NAME }}
+                cd ${{ env.PROJECT_PATH }}
+                timeout 3m godot --headless --verbose --export-release "${{ env.PLATFORM_NAME }}" ../build/${{ env.PLATFORM_NAME }}/${{ env.EXPORT_NAME }}.exe
+                godot --headless --verbose --export-release "${{ env.PLATFORM_NAME }}" ../build/${{ env.PLATFORM_NAME }}/${{ env.EXPORT_NAME }}.exe
+          - name: Upload Artifact
+            uses: actions/upload-artifact@v4
+            with:
+                name: Client - ${{ env.PLATFORM_NAME }}
+                path: ${{ github.workspace }}/build/${{ env.EXPORT_NAME }}
+    export-linux:
+        runs-on: ubuntu-latest
+        container:
+            image: barichello/godot-ci:mono-4.2.2
+        env:
+            PLATFORM_NAME: linux-x11-x64
+        steps:
+          - uses: actions/setup-dotnet@v4
+            with:
+                dotnet-version: '8'
+          - uses: actions/checkout@v4
+          - name: Setup
+            run: |
+                mkdir -v -p ~/.local/share/godot/export_templates/
+                mv /root/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable.mono ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable.mono
+          - name: Build
+            run: |
+                mkdir -v -p build/${{ env.PLATFORM_NAME }}
+                cd ${{ env.PROJECT_PATH }}
+                timeout 3m godot --headless --verbose --export-release "${{ env.PLATFORM_NAME }}" ../build/${{ env.PLATFORM_NAME }}/${{ env.EXPORT_NAME }}.x86_64
+                godot --headless --verbose --export-release "${{ env.PLATFORM_NAME }}" ../build/${{ env.PLATFORM_NAME }}/${{ env.EXPORT_NAME }}.x86_64
+          - name: Upload Artifact
+            uses: actions/upload-artifact@v4
+            with:
+                name: Client - ${{ env.PLATFORM_NAME }}
+                path: ${{ github.workspace }}/build/${{ env.EXPORT_NAME }}
